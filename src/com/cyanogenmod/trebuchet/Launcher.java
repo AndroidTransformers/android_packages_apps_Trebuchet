@@ -45,6 +45,7 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.database.ContentObserver;
@@ -89,6 +90,7 @@ import android.view.animation.DecelerateInterpolator;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Advanceable;
 import android.widget.ImageView;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -293,6 +295,7 @@ public final class Launcher extends Activity
     // Preferences
     private boolean mShowSearchBar;
     private boolean mShowDockDivider;
+    private boolean mHideIconLabels;
     private boolean mAutoRotate;
 
     private Runnable mBuildLayersRunnable = new Runnable() {
@@ -348,6 +351,7 @@ public final class Launcher extends Activity
         // Preferences
         mShowSearchBar = PreferencesProvider.Interface.Homescreen.getShowSearchBar(this);
         mShowDockDivider = PreferencesProvider.Interface.Homescreen.Indicator.getShowDockDivider(this);
+        mHideIconLabels = PreferencesProvider.Interface.Homescreen.getHideIconLabels(this);
         mAutoRotate = PreferencesProvider.Interface.General.getAutoRotate(this, getResources().getBoolean(R.bool.allow_rotation));
 
         if (PROFILE_STARTUP) {
@@ -976,6 +980,9 @@ public final class Launcher extends Activity
     View createShortcut(int layoutResId, ViewGroup parent, ShortcutInfo info) {
         BubbleTextView favorite = (BubbleTextView) mInflater.inflate(layoutResId, parent, false);
         favorite.applyFromShortcutInfo(info, mIconCache);
+        if (mHideIconLabels) {
+            favorite.setTextVisible(false);
+        }
         favorite.setOnClickListener(this);
         return favorite;
     }
@@ -1734,6 +1741,9 @@ public final class Launcher extends Activity
         // Create the view
         FolderIcon newFolder =
             FolderIcon.fromXml(R.layout.folder_icon, this, layout, folderInfo, mIconCache);
+        if (mHideIconLabels) {
+            newFolder.setTextVisible(false);
+        }
         mWorkspace.addInScreen(newFolder, container, screen, cellX, cellY, 1, 1,
                 isWorkspaceLocked());
         return newFolder;
@@ -1945,6 +1955,33 @@ public final class Launcher extends Activity
         }
     }
 
+    public void onLongClickAppsTab(View v) {
+        final PopupMenu popupMenu = new PopupMenu(this, v);
+        final Menu menu = popupMenu.getMenu();
+        dismissAllAppsSortCling(null);
+        popupMenu.inflate(R.menu.apps_tab);
+        AppsCustomizePagedView.SortMode sortMode = mAppsCustomizeContent.getSortMode();
+        if (sortMode == AppsCustomizePagedView.SortMode.Title) {
+            menu.findItem(R.id.apps_sort_title).setChecked(true);
+        } else if (sortMode == AppsCustomizePagedView.SortMode.InstallDate) {
+            menu.findItem(R.id.apps_sort_install_date).setChecked(true);
+        }
+        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                public boolean onMenuItemClick(MenuItem item) {
+                    switch (item.getItemId()) {
+                        case R.id.apps_sort_title:
+                            mAppsCustomizeContent.setSortMode(AppsCustomizePagedView.SortMode.Title);
+                            break;
+                        case R.id.apps_sort_install_date:
+                            mAppsCustomizeContent.setSortMode(AppsCustomizePagedView.SortMode.InstallDate);
+                            break;
+                    }
+                    return true;
+                }
+        });
+        popupMenu.show();
+    }
+
     void startApplicationDetailsActivity(ComponentName componentName) {
         String packageName = componentName.getPackageName();
         Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
@@ -1962,6 +1999,26 @@ public final class Launcher extends Activity
         } else {
             String packageName = appInfo.componentName.getPackageName();
             String className = appInfo.componentName.getClassName();
+            Intent intent = new Intent(
+                    Intent.ACTION_DELETE, Uri.fromParts("package", packageName, className));
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
+                    Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+            startActivity(intent);
+        }
+    }
+
+    void startShortcutUninstallActivity(ShortcutInfo shortcutInfo) {
+        PackageManager pm = getPackageManager();
+        ResolveInfo resolveInfo = pm.resolveActivity(shortcutInfo.intent, 0);
+        if ((resolveInfo.activityInfo.applicationInfo.flags &
+                android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0) {
+            // System applications cannot be installed. For now, show a toast explaining that.
+            // We may give them the option of disabling apps this way.
+            int messageId = R.string.uninstall_system_app_text;
+            Toast.makeText(this, messageId, Toast.LENGTH_SHORT).show();
+        } else {
+            String packageName = shortcutInfo.intent.getComponent().getPackageName();
+            String className = shortcutInfo.intent.getComponent().getClassName();
             Intent intent = new Intent(
                     Intent.ACTION_DELETE, Uri.fromParts("package", packageName, className));
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
@@ -3266,6 +3323,9 @@ public final class Launcher extends Activity
                     FolderIcon newFolder = FolderIcon.fromXml(R.layout.folder_icon, this,
                             (ViewGroup) workspace.getChildAt(workspace.getCurrentPage()),
                             (FolderInfo) item, mIconCache);
+                    if (!mHideIconLabels) {
+                        newFolder.setTextVisible(false);
+                    }
                     workspace.addInScreen(newFolder, item.container, item.screen, item.cellX,
                             item.cellY, 1, 1, false);
                     break;
@@ -3629,6 +3689,7 @@ public final class Launcher extends Activity
     }
     private void dismissCling(final Cling cling, final String flag, int duration) {
         if (cling != null) {
+            cling.dismiss();
             ObjectAnimator anim = ObjectAnimator.ofFloat(cling, "alpha", 0f);
             anim.setDuration(duration);
             anim.addListener(new AnimatorListenerAdapter() {
@@ -3691,6 +3752,16 @@ public final class Launcher extends Activity
             removeCling(R.id.all_apps_cling);
         }
     }
+    public void showFirstRunAllAppsSortCling() {
+        // Enable the clings only if they have not been dismissed before
+        SharedPreferences prefs =
+            getSharedPreferences(PreferencesProvider.PREFERENCES_KEY, Context.MODE_PRIVATE);
+        if (isClingsEnabled() && !prefs.getBoolean(Cling.ALLAPPS_SORT_CLING_DISMISSED_KEY, false)) {
+            initCling(R.id.all_apps_sort_cling, null, true, 0);
+        } else {
+            removeCling(R.id.all_apps_sort_cling);
+        }
+    }
     public Cling showFirstRunFoldersCling() {
         // Enable the clings only if they have not been dismissed before
         if (isClingsEnabled() &&
@@ -3715,6 +3786,10 @@ public final class Launcher extends Activity
     public void dismissAllAppsCling(View v) {
         Cling cling = (Cling) findViewById(R.id.all_apps_cling);
         dismissCling(cling, Cling.ALLAPPS_CLING_DISMISSED_KEY, DISMISS_CLING_DURATION);
+    }
+    public void dismissAllAppsSortCling(View v) {
+        Cling cling = (Cling) findViewById(R.id.all_apps_sort_cling);
+        dismissCling(cling, Cling.ALLAPPS_SORT_CLING_DISMISSED_KEY, DISMISS_CLING_DURATION);
     }
     public void dismissFolderCling(View v) {
         Cling cling = (Cling) findViewById(R.id.folder_cling);

@@ -25,7 +25,7 @@
     <!-- Application copyright -->
     <string name="application_copyright">Copyright \u00A9 CyanogenMod 2012</string>
     <!-- Application version -->
-    <string name="application_version">0.1</string>
+    <string name="application_version">0.J</string>
     <!-- Accessibility-facing application name -->
     <string name="home">Home</string>
     <!-- Name for all applications running as this uid. -->
@@ -121,6 +121,8 @@ s -->
 
     <!-- Label for delete drop target. [CHAR_LIMIT=30] -->
     <string name="delete_target_label">Remove</string>
+    <!-- Label for cancel drop target. [CHAR_LIMIT=30] -->
+    <string name="cancel_target_label">Cancel</string>
     <!-- Label for uninstall drop target. [CHAR_LIMIT=30]-->
     <string name="delete_target_uninstall_label">Uninstall</string>
     <!-- Label for the info icon. [CHAR_LIMIT=30] -->
@@ -157,6 +159,11 @@ s -->
     <string name="menu_preferences">Trebuchet settings</string>
     <!-- Noun, menu item used to show help. [CHAR_LIMIT=none] -->
     <string name="menu_help">Help</string>
+
+    <!-- Noun, menu item used to sort apps by name -->
+    <string name="menu_apps_sort_title">Name</string>
+    <!-- Noun, menu item used to sort apps by install date -->
+    <string name="menu_apps_sort_install_date">Install Date</string>
 
     <!-- URL pointing to help text. If empty, no link to help will be created [DO NOT TRANSLATE] -->
     <string name="help_url" translatable="false"></string>
@@ -242,6 +249,10 @@ s -->
     <string name="all_apps_cling_title">Choose some apps</string>
     <!-- The description of how to pick up and add an item to the workspace [CHAR_LIMIT=none] -->
     <string name="all_apps_cling_add_item">To add an app to your Home screen, touch &amp; hold it.</string>
+    <!-- The title text for the All Apps Sort cling [CHAR_LIMIT=none] -->
+    <string name="all_apps_sort_cling_title">Sort your apps</string>
+    <!-- The description of how to pick sort apps in the drawer [CHAR_LIMIT=none] -->
+    <string name="all_apps_sort_cling_add_item">Touch &amp; hold the Apps tab to select your sort mode</string>
     <!-- The title text for the Folder cling [CHAR_LIMIT=none] -->
     <string name="folder_cling_title">Organize your apps with folders</string>
     <!-- The description of how to move an app [CHAR_LIMIT=none] -->
@@ -301,9 +312,15 @@ s -->
     <string name="preferences_interface_homescreen_general_grid_summary">Choose the number of rows/columns on the homescreen</string>
     <string name="preferences_interface_homescreen_general_grid_rows_title">Rows</string>
     <string name="preferences_interface_homescreen_general_grid_columns_title">Columns</string>
+    <string name="preferences_interface_homescreen_general_screen_padding_vertical_title">Vertical Padding</string>
+    <string name="preferences_interface_homescreen_general_screen_padding_vertical_summary">Extra vertical spacing on the homescreen</string>
+    <string name="preferences_interface_homescreen_general_screen_padding_horizontal_title">Horizontal Padding</string>
+    <string name="preferences_interface_homescreen_general_screen_padding_horizontal_summary">Extra horizontal spacing on the homescreen</string>
     <string name="preferences_interface_homescreen_general_search_summary">Enable persistent search bar</string>
     <string name="preferences_interface_homescreen_general_resize_any_widget_title">Resize any widget</string>
     <string name="preferences_interface_homescreen_general_resize_any_widget_summary">Allow resizing of widgets that normally aren\'t resizeable</string>
+    <string name="preferences_interface_homescreen_general_hide_icon_labels_title">Hide icon labels</string>
+    <string name="preferences_interface_homescreen_general_hide_icon_labels_summary">Hide homescreen icon labels</string>
     <string name="preferences_interface_homescreen_scrolling_category">Scrolling</string>
     <string name="preferences_interface_homescreen_scrolling_scroll_wallpaper_title">Scroll Wallpaper</string>
     <string name="preferences_interface_homescreen_scrolling_scroll_wallpaper_summary">Scroll wallpaper when scrolling homescreens</string>
