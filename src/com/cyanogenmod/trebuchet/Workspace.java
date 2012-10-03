@@ -155,9 +155,6 @@ public class Workspace extends SmoothPagedView
     private SpringLoadedDragController mSpringLoadedDragController;
     private float mSpringLoadedShrinkFactor;
 
-    private static final int DEFAULT_CELL_COUNT_X = 4;
-    private static final int DEFAULT_CELL_COUNT_Y = 4;
-
     // State variable that indicates whether the pages are small (ie when you're
     // in all apps or customize mode)
 
@@ -298,8 +295,8 @@ public class Workspace extends SmoothPagedView
         mFadeInAdjacentScreens = false;
         mWallpaperManager = WallpaperManager.getInstance(context);
 
-        int cellCountX = DEFAULT_CELL_COUNT_X;
-        int cellCountY = DEFAULT_CELL_COUNT_Y;
+        int cellCountX = context.getResources().getInteger(R.integer.cell_count_x);
+        int cellCountY = context.getResources().getInteger(R.integer.cell_count_y);
 
         TypedArray a = context.obtainStyledAttributes(attrs,
                 R.styleable.Workspace, defStyle, 0);
@@ -324,7 +321,7 @@ public class Workspace extends SmoothPagedView
         setOnHierarchyChangeListener(this);
 
         // if there is a value set it the preferences, use that instead
-        if (!LauncherApplication.isScreenLarge()) {
+        if ((!LauncherApplication.isScreenLarge()) || (getResources().getBoolean(R.bool.config_workspaceTabletGrid) == true)) {
             cellCountX = PreferencesProvider.Interface.Homescreen.getCellCountX(context, cellCountX);
             cellCountY = PreferencesProvider.Interface.Homescreen.getCellCountY(context, cellCountY);
         }
