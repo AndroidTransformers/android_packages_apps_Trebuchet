@@ -3719,6 +3719,16 @@ public final class Launcher extends Activity
             removeCling(R.id.all_apps_cling);
         }
     }
+    public void showFirstRunAllAppsSortCling() {
+        // Enable the clings only if they have not been dismissed before
+        SharedPreferences prefs =
+            getSharedPreferences(PreferencesProvider.PREFERENCES_KEY, Context.MODE_PRIVATE);
+        if (isClingsEnabled() && !prefs.getBoolean(Cling.ALLAPPS_SORT_CLING_DISMISSED_KEY, false)) {
+            initCling(R.id.all_apps_sort_cling, null, true, 0);
+        } else {
+            removeCling(R.id.all_apps_sort_cling);
+        }
+    }
     public Cling showFirstRunFoldersCling() {
         // Enable the clings only if they have not been dismissed before
         if (isClingsEnabled() &&
@@ -3743,6 +3753,10 @@ public final class Launcher extends Activity
     public void dismissAllAppsCling(View v) {
         Cling cling = (Cling) findViewById(R.id.all_apps_cling);
         dismissCling(cling, Cling.ALLAPPS_CLING_DISMISSED_KEY, DISMISS_CLING_DURATION);
+    }
+    public void dismissAllAppsSortCling(View v) {
+        Cling cling = (Cling) findViewById(R.id.all_apps_sort_cling);
+        dismissCling(cling, Cling.ALLAPPS_SORT_CLING_DISMISSED_KEY, DISMISS_CLING_DURATION);
     }
     public void dismissFolderCling(View v) {
         Cling cling = (Cling) findViewById(R.id.folder_cling);
