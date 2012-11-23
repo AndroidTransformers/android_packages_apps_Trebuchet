@@ -3543,17 +3543,17 @@ public final class Launcher extends Activity
      *
      * Implementation of the method from LauncherModel.Callbacks.
      */
-    public void bindAppsRemoved(ArrayList<ApplicationInfo> apps, boolean permanent) {
+    public void bindAppsRemoved(ArrayList<String> packageNames, boolean permanent) {
         if (permanent) {
-            mWorkspace.removeItems(apps);
+            mWorkspace.removeItems(packageNames);
         }
 
         if (mAppsCustomizeContent != null) {
-            mAppsCustomizeContent.removeApps(apps);
+            mAppsCustomizeContent.removeApps(packageNames);
         }
 
         // Notify the drag controller
-        mDragController.onAppsRemoved(apps, this);
+        mDragController.onAppsRemoved(packageNames, this);
     }
 
     /**
