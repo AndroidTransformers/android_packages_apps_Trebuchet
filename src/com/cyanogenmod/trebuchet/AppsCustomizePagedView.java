@@ -249,6 +249,14 @@ public class AppsCustomizePagedView extends PagedViewWithDraggableItems implemen
         Widgets
     }
 
+    /**
+     * The sorting mode of the apps.
+     */
+    public enum SortMode {
+        Title,
+        InstallDate
+    }
+
     // Refs
     private Launcher mLauncher;
     private DragController mDragController;
@@ -262,11 +270,13 @@ public class AppsCustomizePagedView extends PagedViewWithDraggableItems implemen
 
     // Content
     private ContentType mContentType;
+    private SortMode mSortMode = SortMode.Title;
     private ArrayList<ApplicationInfo> mApps;
     private ArrayList<Object> mWidgets;
 
     // Cling
     private boolean mHasShownAllAppsCling;
+    private boolean mHasShownAllAppsSortCling;
     private int mClingFocusedX;
     private int mClingFocusedY;
 
@@ -562,17 +572,25 @@ public class AppsCustomizePagedView extends PagedViewWithDraggableItems implemen
     }
 
     void showAllAppsCling() {
-        if (!mHasShownAllAppsCling && isDataReady()) {
-            mHasShownAllAppsCling = true;
-            // Calculate the position for the cling punch through
-            int[] offset = new int[2];
-            int[] pos = mWidgetSpacingLayout.estimateCellPosition(mClingFocusedX, mClingFocusedY);
-            mLauncher.getDragLayer().getLocationInDragLayer(this, offset);
-            // PagedViews are centered horizontally but top aligned
-            pos[0] += (getMeasuredWidth() - mWidgetSpacingLayout.getMeasuredWidth()) / 2 +
-                    offset[0];
-            pos[1] += offset[1];
-            mLauncher.showFirstRunAllAppsCling(pos);
+        AppsCustomizeTabHost tabHost = getTabHost();
+        if (tabHost != null) {
+            Cling allAppsCling = (Cling) tabHost.findViewById(R.id.all_apps_cling);
+            if (!mHasShownAllAppsCling && isDataReady()) {
+                mHasShownAllAppsCling = true;
+                // Calculate the position for the cling punch through
+                int[] offset = new int[2];
+                int[] pos = mWidgetSpacingLayout.estimateCellPosition(mClingFocusedX, mClingFocusedY);
+                mLauncher.getDragLayer().getLocationInDragLayer(this, offset);
+                // PagedViews are centered horizontally but top aligned
+                pos[0] += (getMeasuredWidth() - mWidgetSpacingLayout.getMeasuredWidth()) / 2 +
+                        offset[0];
+                pos[1] += offset[1];
+                mLauncher.showFirstRunAllAppsCling(pos);
+            } else if (!mHasShownAllAppsSortCling && isDataReady() &&
+                    allAppsCling != null && allAppsCling.isDismissed()) {
+                mHasShownAllAppsSortCling = true;
+                mLauncher.showFirstRunAllAppsSortCling();
+            }
         }
     }
 
@@ -1868,10 +1886,43 @@ public class AppsCustomizePagedView extends PagedViewWithDraggableItems implemen
         }
     }
 
-    @Override
+    public SortMode getSortMode() {
+        return mSortMode;
+    }
+
+    public void setSortMode(SortMode sortMode) {
+        if (mSortMode == sortMode) {
+            return;
+        }
+
+        mSortMode = sortMode;
+
+        if (mSortMode == SortMode.Title) {
+            Collections.sort(mApps, LauncherModel.getAppNameComparator());
+        } else if (mSortMode == SortMode.InstallDate) {
+            Collections.sort(mApps, LauncherModel.APP_INSTALL_TIME_COMPARATOR);
+        }
+
+        if (mJoinWidgetsApps) {
+            for (int i = 0; i < mNumAppsPages; i++) {
+               syncAppsPageItems(i, true);
+            }
+        } else {
+            if (mContentType == ContentType.Applications) {
+                for (int i = 0; i < getChildCount(); i++) {
+                    syncAppsPageItems(i, true);
+                }
+            }
+        }
+    }
+
     public void setApps(ArrayList<ApplicationInfo> list) {
         mApps = list;
-        Collections.sort(mApps, LauncherModel.APP_NAME_COMPARATOR);
+        if (mSortMode == SortMode.Title) {
+            Collections.sort(mApps, LauncherModel.getAppNameComparator());
+        } else if (mSortMode == SortMode.InstallDate) {
+            Collections.sort(mApps, LauncherModel.APP_INSTALL_TIME_COMPARATOR);
+        }
         updatePageCounts();
         invalidateOnDataChange();
     }
@@ -1880,7 +1931,12 @@ public class AppsCustomizePagedView extends PagedViewWithDraggableItems implemen
         int count = list.size();
         for (int i = 0; i < count; ++i) {
             ApplicationInfo info = list.get(i);
-            int index = Collections.binarySearch(mApps, info, LauncherModel.APP_NAME_COMPARATOR);
+            int index = 0;
+            if (mSortMode == SortMode.Title) {
+                index = Collections.binarySearch(mApps, info, LauncherModel.getAppNameComparator());
+            } else if (mSortMode == SortMode.InstallDate) {
+                index = Collections.binarySearch(mApps, info, LauncherModel.APP_INSTALL_TIME_COMPARATOR);
+            }
             if (index < 0) {
                 mApps.add(-(index + 1), info);
             }
@@ -1903,6 +1959,16 @@ public class AppsCustomizePagedView extends PagedViewWithDraggableItems implemen
         }
         return -1;
     }
+    private int findAppByPackage(List<ApplicationInfo> list, String packageName) {
+        int length = list.size();
+        for (int i = 0; i < length; ++i) {
+            ApplicationInfo info = list.get(i);
+            if (ItemInfo.getPackageName(info.intent).equals(packageName)) {
+                return i;
+            }
+        }
+        return -1;
+    }
     private void removeAppsWithoutInvalidate(ArrayList<ApplicationInfo> list) {
         // loop through all the apps and remove apps that have the same component
         int length = list.size();
@@ -1914,9 +1980,18 @@ public class AppsCustomizePagedView extends PagedViewWithDraggableItems implemen
             }
         }
     }
-    @Override
-    public void removeApps(ArrayList<ApplicationInfo> list) {
-        removeAppsWithoutInvalidate(list);
+    private void removeAppsWithPackageNameWithoutInvalidate(ArrayList<String> packageNames) {
+        // loop through all the package names and remove apps that have the same package name
+        for (String pn : packageNames) {
+            int removeIndex = findAppByPackage(mApps, pn);
+            while (removeIndex > -1) {
+                mApps.remove(removeIndex);
+                removeIndex = findAppByPackage(mApps, pn);
+            }
+        }
+    }
+    public void removeApps(ArrayList<String> packageNames) {
+        removeAppsWithPackageNameWithoutInvalidate(packageNames);
         updatePageCounts();
         invalidateOnDataChange();
     }

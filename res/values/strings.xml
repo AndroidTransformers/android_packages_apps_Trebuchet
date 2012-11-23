@@ -158,6 +158,11 @@ s -->
     <!-- Noun, menu item used to show help. [CHAR_LIMIT=none] -->
     <string name="menu_help">Help</string>
 
+    <!-- Noun, menu item used to sort apps by name -->
+    <string name="menu_apps_sort_title">Name</string>
+    <!-- Noun, menu item used to sort apps by install date -->
+    <string name="menu_apps_sort_install_date">Install Date</string>
+
     <!-- URL pointing to help text. If empty, no link to help will be created [DO NOT TRANSLATE] -->
     <string name="help_url" translatable="false"></string>
 
@@ -242,6 +247,10 @@ s -->
     <string name="all_apps_cling_title">Choose some apps</string>
     <!-- The description of how to pick up and add an item to the workspace [CHAR_LIMIT=none] -->
     <string name="all_apps_cling_add_item">To add an app to your Home screen, touch &amp; hold it.</string>
+    <!-- The title text for the All Apps Sort cling [CHAR_LIMIT=none] -->
+    <string name="all_apps_sort_cling_title">Sort your apps</string>
+    <!-- The description of how to pick sort apps in the drawer [CHAR_LIMIT=none] -->
+    <string name="all_apps_sort_cling_add_item">Touch &amp; hold the Apps tab to select your sort mode</string>
     <!-- The title text for the Folder cling [CHAR_LIMIT=none] -->
     <string name="folder_cling_title">Organize your apps with folders</string>
     <!-- The description of how to move an app [CHAR_LIMIT=none] -->
@@ -250,6 +259,8 @@ s -->
     <string name="folder_cling_create_folder">To make a new folder on your Home screen, stack one app on top of another.</string>
     <!-- The text on the button to dismiss a cling [CHAR_LIMIT=none] -->
     <string name="cling_dismiss">OK</string>
+    <!-- Error message on dummy custom cling layout [DO NOT TRANSLATE] -->
+    <string name="dummy_custom_cling_error_message">Error: custom workspace layout passed in but custom cling was not overwritten</string>
     <add-resource type="string" name="default_folder_name" />
 
     <!-- Folder accessibility -->
