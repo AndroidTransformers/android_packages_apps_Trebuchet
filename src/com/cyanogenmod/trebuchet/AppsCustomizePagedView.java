@@ -616,18 +616,22 @@ public class AppsCustomizePagedView extends PagedViewWithDraggableItems implemen
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 
-    public void onPackagesUpdated() {
-        // TODO: this isn't ideal, but we actually need to delay here. This call is triggered
-        // by a broadcast receiver, and in order for it to work correctly, we need to know that
-        // the AppWidgetService has already received and processed the same broadcast. Since there
-        // is no guarantee about ordering of broadcast receipt, we just delay here. This is a
-        // workaround until we add a callback from AppWidgetService to AppWidgetHost when widget
-        // packages are added, updated or removed.
-        postDelayed(new Runnable() {
-           public void run() {
-               updatePackages();
-           }
-        }, 1500);
+    public void onPackagesUpdated(boolean immediate) {
+        if (immediate) {
+            updatePackages();
+        } else {
+            // TODO: this isn't ideal, but we actually need to delay here. This call is triggered
+            // by a broadcast receiver, and in order for it to work correctly, we need to know that
+            // the AppWidgetService has already received and processed the same broadcast. Since there
+            // is no guarantee about ordering of broadcast receipt, we just delay here. This is a
+            // workaround until we add a callback from AppWidgetService to AppWidgetHost when widget
+            // packages are added, updated or removed.
+            postDelayed(new Runnable() {
+               public void run() {
+                   updatePackages();
+               }
+            }, 1500);
+        }
     }
 
     public void updatePackages() {
@@ -666,7 +670,7 @@ public class AppsCustomizePagedView extends PagedViewWithDraggableItems implemen
     @Override
     public void onClick(View v) {
         // When we have exited all apps or are in transition, disregard clicks
-        if (!mLauncher.isAllAppsCustomizeOpen() ||
+        if (!mLauncher.isAllAppsVisible() ||
                 mLauncher.getWorkspace().isSwitchingState()) return;
 
         if (v instanceof PagedViewIcon) {
@@ -1898,7 +1902,7 @@ public class AppsCustomizePagedView extends PagedViewWithDraggableItems implemen
         mSortMode = sortMode;
 
         if (mSortMode == SortMode.Title) {
-            Collections.sort(mApps, LauncherModel.getAppNameComparator());
+            Collections.sort(mApps, LauncherModel.APP_NAME_COMPARATOR);
         } else if (mSortMode == SortMode.InstallDate) {
             Collections.sort(mApps, LauncherModel.APP_INSTALL_TIME_COMPARATOR);
         }
@@ -1916,10 +1920,11 @@ public class AppsCustomizePagedView extends PagedViewWithDraggableItems implemen
         }
     }
 
+    @Override
     public void setApps(ArrayList<ApplicationInfo> list) {
         mApps = list;
         if (mSortMode == SortMode.Title) {
-            Collections.sort(mApps, LauncherModel.getAppNameComparator());
+            Collections.sort(mApps, LauncherModel.APP_NAME_COMPARATOR);
         } else if (mSortMode == SortMode.InstallDate) {
             Collections.sort(mApps, LauncherModel.APP_INSTALL_TIME_COMPARATOR);
         }
@@ -1933,7 +1938,7 @@ public class AppsCustomizePagedView extends PagedViewWithDraggableItems implemen
             ApplicationInfo info = list.get(i);
             int index = 0;
             if (mSortMode == SortMode.Title) {
-                index = Collections.binarySearch(mApps, info, LauncherModel.getAppNameComparator());
+                index = Collections.binarySearch(mApps, info, LauncherModel.APP_NAME_COMPARATOR);
             } else if (mSortMode == SortMode.InstallDate) {
                 index = Collections.binarySearch(mApps, info, LauncherModel.APP_INSTALL_TIME_COMPARATOR);
             }
@@ -1959,16 +1964,6 @@ public class AppsCustomizePagedView extends PagedViewWithDraggableItems implemen
         }
         return -1;
     }
-    private int findAppByPackage(List<ApplicationInfo> list, String packageName) {
-        int length = list.size();
-        for (int i = 0; i < length; ++i) {
-            ApplicationInfo info = list.get(i);
-            if (ItemInfo.getPackageName(info.intent).equals(packageName)) {
-                return i;
-            }
-        }
-        return -1;
-    }
     private void removeAppsWithoutInvalidate(ArrayList<ApplicationInfo> list) {
         // loop through all the apps and remove apps that have the same component
         int length = list.size();
@@ -1980,18 +1975,9 @@ public class AppsCustomizePagedView extends PagedViewWithDraggableItems implemen
             }
         }
     }
-    private void removeAppsWithPackageNameWithoutInvalidate(ArrayList<String> packageNames) {
-        // loop through all the package names and remove apps that have the same package name
-        for (String pn : packageNames) {
-            int removeIndex = findAppByPackage(mApps, pn);
-            while (removeIndex > -1) {
-                mApps.remove(removeIndex);
-                removeIndex = findAppByPackage(mApps, pn);
-            }
-        }
-    }
-    public void removeApps(ArrayList<String> packageNames) {
-        removeAppsWithPackageNameWithoutInvalidate(packageNames);
+    @Override
+    public void removeApps(ArrayList<ApplicationInfo> list) {
+        removeAppsWithoutInvalidate(list);
         updatePageCounts();
         invalidateOnDataChange();
     }

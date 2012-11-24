@@ -19,6 +19,10 @@ package com.cyanogenmod.trebuchet.preference;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import com.cyanogenmod.trebuchet.LauncherApplication;
+import com.cyanogenmod.trebuchet.Workspace;
+import com.cyanogenmod.trebuchet.AppsCustomizePagedView;
+
 public final class PreferencesProvider {
     public static final String PREFERENCES_KEY = "com.cyanogenmod.trebuchet_preferences";
 
@@ -51,6 +55,16 @@ public final class PreferencesProvider {
                     return def;
                 }
             }
+            public static int getScreenPaddingVertical(Context context) {
+                final SharedPreferences preferences = context.getSharedPreferences(PREFERENCES_KEY, 0);
+                return (int)((float) preferences.getInt("ui_homescreen_screen_padding_vertical", 0) * 3.0f *
+                        LauncherApplication.getScreenDensity());
+            }
+            public static int getScreenPaddingHorizontal(Context context) {
+                final SharedPreferences preferences = context.getSharedPreferences(PREFERENCES_KEY, 0);
+                return (int)((float) preferences.getInt("ui_homescreen_screen_padding_horizontal", 0) * 3.0f *
+                        LauncherApplication.getScreenDensity());
+            }
             public static boolean getShowSearchBar(Context context) {
                 final SharedPreferences preferences = context.getSharedPreferences(PREFERENCES_KEY, 0);
                 return preferences.getBoolean("ui_homescreen_general_search", true);
@@ -58,6 +72,10 @@ public final class PreferencesProvider {
             public static boolean getResizeAnyWidget(Context context) {
                 final SharedPreferences preferences = context.getSharedPreferences(PREFERENCES_KEY, 0);
                 return preferences.getBoolean("ui_homescreen_general_resize_any_widget", false);
+            }
+            public static boolean getHideIconLabels(Context context) {
+                final SharedPreferences preferences = context.getSharedPreferences(PREFERENCES_KEY, 0);
+                return preferences.getBoolean("ui_homescreen_general_hide_icon_labels", false);
             }
             public static class Scrolling {
                 public static boolean getScrollWallpaper(Context context) {

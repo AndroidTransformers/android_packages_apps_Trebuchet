@@ -88,8 +88,6 @@ public class Cling extends FrameLayout {
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.Cling, defStyle, 0);
         mDrawIdentifier = a.getString(R.styleable.Cling_drawIdentifier);
         a.recycle();
-
-        setClickable(true);
     }
 
     void init(Launcher l, int[] positionData) {
@@ -167,7 +165,7 @@ public class Cling extends FrameLayout {
 
     @Override
     public View focusSearch(int direction) {
-        return this.focusSearch(this, direction);
+        return this.focusSearch(null, direction);
     }
 
     @Override
